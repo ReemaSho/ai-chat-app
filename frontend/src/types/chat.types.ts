@@ -3,4 +3,5 @@ export interface Chat {
   title: string;
   userId: number;
   createdAt: string;
+  updatedAt: string;
 }

@@ -1,16 +1,16 @@
-import { useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 
-import Sidebar from "@/components/sidebar/Sidebar";
+import Sidebar from '@/components/sidebar/Sidebar';
 
-import ChatInput from "@/components/chat/ChatInput";
-import MessageBubble from "@/components/chat/MessageBubble";
+import ChatInput from '@/components/chat/ChatInput';
+import MessageBubble from '@/components/chat/MessageBubble';
 
-import { useChatMessages } from "../hooks/useChatMessages";
-import { useChats } from "../hooks/useChats";
-import { useAuth } from "../hooks/useAuth";
+import { useChatMessages } from '../hooks/useChatMessages';
+import { useChats } from '../hooks/useChats';
+import { useAuth } from '../hooks/useAuth';
 
-import { CircleDot } from "lucide-react";
+import { CircleDot } from 'lucide-react';
 
 const ChatPage = () => {
   const location = useLocation();
@@ -48,12 +48,12 @@ const ChatPage = () => {
   // -----------------------------
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
-      behavior: "smooth",
+      behavior: 'smooth',
     });
   }, [messages, streaming]);
 
   return (
-    <div className="flex h-screen bg-white">
+    <div className='flex h-screen bg-white'>
       {/* -----------------------------
           SIDEBAR
       ----------------------------- */}
@@ -62,15 +62,15 @@ const ChatPage = () => {
       {/* -----------------------------
           CHAT AREA
       ----------------------------- */}
-      <div className="flex flex-col flex-1 bg-white">
+      <div className='flex flex-col flex-1 bg-white'>
         {/* -----------------------------
             MESSAGES
         ----------------------------- */}
-        <div className="flex-1 overflow-y-auto px-4 py-6">
-          <div className="max-w-2xl mx-auto space-y-4">
+        <div className='flex-1 overflow-y-auto px-4 py-6'>
+          <div className='max-w-2xl mx-auto space-y-4'>
             {/* Loading initial chat */}
             {loading && (
-              <p className="text-sm text-zinc-400">Loading messages...</p>
+              <p className='text-sm text-zinc-400'>Loading messages...</p>
             )}
 
             {/* Messages */}
@@ -82,8 +82,8 @@ const ChatPage = () => {
 
             {/* Typing indicator */}
             {streaming && (
-              <div className="flex items-center gap-2 text-sm text-zinc-400 animate-pulse">
-                <CircleDot className="w-4 h-4" />
+              <div className='flex items-center gap-2 text-sm text-zinc-400 animate-pulse'>
+                <CircleDot className='w-4 h-4' />
                 <span>AI is thinking...</span>
               </div>
             )}
@@ -96,8 +96,8 @@ const ChatPage = () => {
         {/* -----------------------------
             INPUT
         ----------------------------- */}
-        <div className="bg-white px-4 py-4  border-zinc-200">
-          <div className="max-w-2xl mx-auto">
+        <div className='bg-white px-4 pt-0 pb-6  border-zinc-200'>
+          <div className='max-w-3xl mx-auto'>
             <ChatInput onSend={send} disabled={streaming} />
           </div>
         </div>
