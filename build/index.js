@@ -1,23 +1,24 @@
-import express from "express";
-import dotenv from "dotenv";
-import cors from "cors";
-import { sequelize } from "./config/db.js";
-import { applyAssociations } from "./models/associations.js";
-import chatRoutes from "./routes/chat.routes.js";
-import messageRoutes from "./routes/message.routes.js";
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import { sequelize } from './config/db.js';
+import { applyAssociations } from './models/associations.js';
+import { seedData } from './seed/seed.js';
+import chatRoutes from './routes/chat.routes.js';
+import messageRoutes from './routes/message.routes.js';
 dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
 // routes
-app.use("/api/v1", chatRoutes);
-app.use("/api/v1", messageRoutes);
+app.use('/api/v1', chatRoutes);
+app.use('/api/v1', messageRoutes);
 /* -----------------------
    BASIC ROUTE
 ------------------------ */
-app.get("/", (req, res) => {
+app.get('/', (req, res) => {
     res.json({
-        message: "AI Chat Backend is running 🚀",
+        message: 'AI Chat Backend is running 🚀',
     });
 });
 /* -----------------------
@@ -29,10 +30,12 @@ const startServer = async () => {
         applyAssociations();
         // 2. Connect DB + sync models
         await sequelize.sync({ alter: true });
-        console.log("Database synced ✅");
+        console.log('Database synced ✅');
         // 3. Seed initial data (demo user)
-        // await seedData();
-        console.log("Seed completed 👤");
+        if (process.env.NODE_ENV === 'development') {
+            await seedData();
+            console.log('Seed completed 👤');
+        }
         // 4. Start server
         const PORT = process.env.PORT || 8000;
         app.listen(PORT, () => {
@@ -40,11 +43,8 @@ const startServer = async () => {
         });
     }
     catch (error) {
-        console.error("Failed to start server ❌", error);
+        console.error('Failed to start server ❌', error);
     }
 };
-/* -----------------------
-   INIT APP
------------------------- */
 startServer();
 //# sourceMappingURL=index.js.map
