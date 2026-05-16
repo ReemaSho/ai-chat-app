@@ -30,8 +30,8 @@ const ChatPage = () => {
       <Sidebar chats={chats} />
 
       <div className='flex flex-col flex-1 bg-white'>
-        <div className='flex-1 overflow-y-auto px-4 py-6'>
-          <div className='w-full max-w-4xl mx-auto space-y-4'>
+        <div className='flex-1 overflow-y-auto py-8'>
+          <div className='w-full max-w-3xl mx-auto px-6 py-2 space-y-8'>
             {loading && (
               <p className='text-sm text-zinc-400'>Loading messages...</p>
             )}
@@ -53,7 +53,7 @@ const ChatPage = () => {
           </div>
         </div>
 
-        <div className='bg-white px-4 pt-0 pb-6 border-zinc-200'>
+        <div className='bg-white px-6 pb-6'>
           <div className='max-w-3xl mx-auto'>
             <ChatInput onSend={send} disabled={streaming} />
           </div>
