@@ -47,7 +47,8 @@ ai-chat-app-2/
 │       ├── context/
 │       ├── hooks/
 │       ├── pages/
-│       └── store/
+│       ├── pages/
+│       ├── store/
 │       └── types/
 │
 ├── package.json
