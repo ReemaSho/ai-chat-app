@@ -1,5 +1,5 @@
 import { useState } from 'react';
-
+import { LoaderCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -40,7 +40,7 @@ const ChatInput = ({ onSend, disabled }: Props) => {
         className='h-14 bg-black text-white hover:bg-zinc-800 rounded-4xl px-8'
         disabled={disabled}
       >
-        Send
+        {disabled ? <LoaderCircle className='animate-spin' /> : 'Send'}
       </Button>
     </div>
   );

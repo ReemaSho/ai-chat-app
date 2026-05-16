@@ -1,114 +1,132 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
-import { getMessagesByChat, sendMessageStream } from "@/api/message.api";
-import { Message } from "@/types/message.types";
+import { useAuth } from './useAuth';
+import { useChatStore } from '@/store/chatStore';
+
+import { Message } from '@/types/message.types';
+
+import {
+  createMessage,
+  loadChatMessages,
+  streamAssistantResponse,
+} from './helpers';
+
+const EMPTY_MESSAGES: Message[] = [];
+
+interface SendOptions {
+  addUserMessage?: boolean;
+}
 
 export const useChatMessages = () => {
+  const { user } = useAuth();
   const { chatId } = useParams();
 
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false); // history loading
-  const [streaming, setStreaming] = useState(false); // AI streaming
+  const currentChatId = chatId ? Number(chatId) : null;
 
-  // -----------------------------
-  // LOAD HISTORY
-  // -----------------------------
+  const processedPendingMessages = useRef<Set<number>>(new Set());
+
+  const [loading, setLoading] = useState(false);
+  const [streaming, setStreaming] = useState(false);
+  const [isFirstChunkReceived, setIsFirstChunkReceived] = useState(false);
+
+  const messages = useChatStore((state) =>
+    currentChatId
+      ? state.messagesByChatId[currentChatId] ?? EMPTY_MESSAGES
+      : EMPTY_MESSAGES
+  );
+
+  const pendingMessage = useChatStore((state) =>
+    currentChatId ? state.pendingMessageByChatId[currentChatId] : undefined
+  );
+
+  const setMessages = useChatStore((state) => state.setMessages);
+  const addMessage = useChatStore((state) => state.addMessage);
+  const updateMessage = useChatStore((state) => state.updateMessage);
+  const clearPendingMessage = useChatStore(
+    (state) => state.clearPendingMessage
+  );
+
+  // LOAD CHAT HISTORY
   useEffect(() => {
-    if (!chatId) return;
+    if (!currentChatId) return;
+    if (messages.length > 0) return;
 
-    const fetchMessages = async () => {
+    loadChatMessages({
+      chatId: currentChatId,
+      setMessages,
+      setLoading,
+    });
+  }, [currentChatId, messages.length, setMessages]);
+
+  // SEND MESSAGE
+  const send = useCallback(
+    async (content: string, options?: SendOptions) => {
+      if (!currentChatId || !content.trim()) return;
+
+      const addUserMessage = options?.addUserMessage ?? true;
+
       try {
-        setLoading(true);
+        setStreaming(true);
+        setIsFirstChunkReceived(false);
 
-        const data = await getMessagesByChat(Number(chatId));
-        setMessages(data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMessages();
-  }, [chatId]);
-
-  // -----------------------------
-  // SEND MESSAGE (STREAMING)
-  // -----------------------------
-  const send = async (content: string) => {
-    if (!chatId || !content.trim()) return;
-
-    try {
-      // 🔥 UI immediately shows "thinking"
-      setStreaming(true);
-
-      const userMessage: Message = {
-        id: Date.now(),
-        role: "user",
-        content,
-      };
-
-      const assistantMessage: Message = {
-        id: Date.now() + 1,
-        role: "assistant",
-        content: "",
-      };
-
-      setMessages((prev) => [...prev, userMessage, assistantMessage]);
-
-      let assistantText = "";
-      let firstChunkReceived = false;
-
-      await sendMessageStream(
-        Number(chatId),
-        content,
-        1,
-
-        // -----------------------------
-        // STREAM CHUNK HANDLER
-        // -----------------------------
-        (chunk) => {
-          // 🔥 first chunk arrives → AI is "active"
-          if (!firstChunkReceived) {
-            firstChunkReceived = true;
-            setStreaming(false); // stop "thinking" state
-          }
-
-          assistantText += chunk;
-
-          setMessages((prev) => {
-            const copy = [...prev];
-            const lastIndex = copy.length - 1;
-
-            const last = copy[lastIndex];
-
-            if (last?.role === "assistant") {
-              copy[lastIndex] = {
-                ...last,
-                content: assistantText,
-              };
-            }
-
-            return copy;
-          });
-        },
-
-        (meta) => {
-          console.log("meta:", meta);
+        if (addUserMessage) {
+          addMessage(
+            currentChatId,
+            createMessage({
+              role: 'user',
+              content,
+              chatId: currentChatId,
+            })
+          );
         }
-      );
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setStreaming(false);
-    }
-  };
+
+        const assistantMessage = createMessage({
+          role: 'assistant',
+          content: '',
+          chatId: currentChatId,
+        });
+
+        addMessage(currentChatId, assistantMessage);
+
+        await streamAssistantResponse({
+          chatId: currentChatId,
+          content,
+          userId: user.id,
+          assistantMessageId: assistantMessage.id,
+          setIsFirstChunkReceived,
+          updateMessage,
+        });
+      } catch (error) {
+        console.error('Failed to send message:', error);
+      } finally {
+        setStreaming(false);
+        setIsFirstChunkReceived(false);
+      }
+    },
+    [currentChatId, user.id, addMessage, updateMessage]
+  );
+
+  // HANDLE PENDING FIRST MESSAGE
+  useEffect(() => {
+    if (!currentChatId || !pendingMessage) return;
+
+    if (processedPendingMessages.current.has(currentChatId)) return;
+
+    processedPendingMessages.current.add(currentChatId);
+
+    clearPendingMessage(currentChatId);
+
+    send(pendingMessage, {
+      addUserMessage: false,
+    });
+  }, [currentChatId, pendingMessage, clearPendingMessage, send]);
 
   return {
     messages,
     send,
     loading,
     streaming,
+    isFirstChunkReceived,
   };
 };

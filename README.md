@@ -10,6 +10,7 @@ A full-stack ChatGPT-style application built with:
 - React
 - Vite
 - Tailwind CSS
+- Zustand state management
 - OpenRouter AI streaming
 
 ## Features
@@ -22,6 +23,9 @@ A full-stack ChatGPT-style application built with:
 - Auto-scroll messages
 - Markdown AI responses
 - Simple user context
+- Global chat/message state with Zustand
+- Instant chat navigation without refetching
+- Optimistic UI updates during streaming
 
 ## Project Structure
 
@@ -43,6 +47,7 @@ ai-chat-app-2/
 │       ├── context/
 │       ├── hooks/
 │       ├── pages/
+│       └── store/
 │       └── types/
 │
 ├── package.json
